@@ -281,36 +281,80 @@ function computePanchanga(y, m, d, lat, lng, tz) {
   // Calendar events (ready to insert into iOS Calendar / Google Calendar)
   const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-  const calendarEvents = [
-    {
-      title:       `🔴 Rahu Kalam 必避 (${formatTime(rahuS)}-${formatTime(rahuS+slot)})`,
-      start:       `${dateStr}T${formatTime(rahuS)}:00+08:00`,
-      end:         `${dateStr}T${formatTime(rahuS+slot)}:00+08:00`,
-      notes:       'Rahu Kalam：避免任何重大行動、決策、出發',
-      color:       'red',
-      calColorId:  '11',
-    },
-    {
-      title:       `🟠 Yamaganda 謹慎 (${formatTime(yamS)}-${formatTime(yamS+slot)})`,
-      start:       `${dateStr}T${formatTime(yamS)}:00+08:00`,
-      end:         `${dateStr}T${formatTime(yamS+slot)}:00+08:00`,
-      notes:       'Yamaganda：謹慎時段，避免重要承諾',
-      color:       'orange',
-      calColorId:  '6',
-    },
-    ...bestChog.map(c => ({
-      title:      `${c.name === 'Amrit' ? '🟡' : '🟢'} ${c.name} 吉時 (${c.start}-${c.end})`,
+  // Chinese labels and action guidance for each Choghadiya type
+  const chogTitleCN = {
+    Amrit: '🟡 黃金時段',
+    Shubh: '🟢 吉祥時段',
+    Labh:  '🟢 財利時段',
+    Char:  '🔵 移動時段',
+    Kaal:  '⚫ 避開時段',
+    Rog:   '🔴 避開時段',
+    Udveg: '🔴 避開時段',
+  };
+  const chogActionCN = {
+    Amrit: '✅ 適合：簽約、重大決策、重要對話、發布產品、募資會議\n❌ 把握這段，不要浪費在瑣事上',
+    Shubh: '✅ 適合：商業洽談、品牌推廣、慶祝、正式場合\n❌ 避免爭論與衝突',
+    Labh:  '✅ 適合：財務規劃、合作提案、投資討論、簽訂協議\n❌ 避免衝動消費',
+    Char:  '✅ 適合：移動、出行、拜訪客戶、搬遷、旅行出發\n❌ 避免靜態重大決策',
+    Kaal:  '❌ 避免：新計畫、簽約、重要決策、出發\n💡 適合：例行工作、整理、回覆訊息',
+    Rog:   '❌ 避免：開啟新事、健康相關決定、重要承諾\n💡 適合：收尾、整理、靜態工作',
+    Udveg: '❌ 避免：談判、簽約、重要對話、公開發言\n💡 適合：內部思考、文件整理',
+  };
+
+  // All 8 Choghadiya slots for the day
+  const allChogEvents = chog.map(c => {
+    const titleCN = chogTitleCN[c.name] || '⚪ 一般時段';
+    const actionCN = chogActionCN[c.name] || '';
+    const isGoodSlot = ['Amrit','Shubh','Labh'].includes(c.name);
+    const isBadSlot  = ['Kaal','Rog','Udveg'].includes(c.name);
+    return {
+      title:      `${titleCN}（${c.start}–${c.end}）`,
       start:      `${dateStr}T${c.start}:00+08:00`,
       end:        `${dateStr}T${c.end}:00+08:00`,
-      notes:      `${c.meaning}`,
-      color:      c.name === 'Amrit' ? 'yellow' : 'green',
-      calColorId: c.name === 'Amrit' ? '5' : '2',
-    })),
+      notes:      actionCN,
+      color:      isGoodSlot ? 'green' : isBadSlot ? 'red' : 'blue',
+      calColorId: isGoodSlot ? (c.name === 'Amrit' ? '5' : '2') : isBadSlot ? '11' : '7',
+    };
+  });
+
+  const calendarEvents = [
+    // ① 凶時：絕對避開（紅色）
     {
-      title:      `📍 命格：${rating} ${naksha} | ${yoga} | ${tithi}`,
+      title:      `🔴 絕對避開（${formatTime(rahuS)}–${formatTime(rahuS+slot)}）`,
+      start:      `${dateStr}T${formatTime(rahuS)}:00+08:00`,
+      end:        `${dateStr}T${formatTime(rahuS+slot)}:00+08:00`,
+      notes:      '❌ 禁止：簽約、重大決定、出發、手術、投資\n❌ 禁止：任何新開始、重要承諾\n💡 可做：例行行政、回覆訊息、休息',
+      color:      'red',
+      calColorId: '11',
+    },
+    // ② 謹慎時段（橘色）
+    {
+      title:      `🟠 謹慎行事（${formatTime(yamS)}–${formatTime(yamS+slot)}）`,
+      start:      `${dateStr}T${formatTime(yamS)}:00+08:00`,
+      end:        `${dateStr}T${formatTime(yamS+slot)}:00+08:00`,
+      notes:      '⚠️ 避免：重要承諾、長期合約、財務決策\n⚠️ 避免：與重要人物的首次會面\n💡 可做：內部會議、準備工作、研究',
+      color:      'orange',
+      calColorId: '6',
+    },
+    // ③ 全部 Choghadiya 時段
+    ...allChogEvents,
+    // ④ 全天命格摘要（藍色全天事件）
+    {
+      title:      `${rating} 今日命格｜${isAvoidNak ? '⚠️ 能量較弱，低調行事' : isGoodNak ? '★ 能量強，把握行動' : '○ 能量平穩，穩健推進'}`,
       allDay:     true,
       date:       dateStr,
-      notes:      `${paksha} (${pakshaCN}) | ${wdCN} | ${isAvoidNak ? '⚠️ Tara Dosha' : isGoodNak ? '★ 吉利星宿' : '○ 一般'}\n日出：${formatTime(rise)} 日落：${formatTime(set)}`,
+      notes:      [
+        `日出：${formatTime(rise)}　日落：${formatTime(set)}`,
+        `農曆：${tithi}（${pakshaCN}）`,
+        isAvoidNak
+          ? `⚠️ 今日能量偏弱，適合低調、整理、反思，避免高風險決策`
+          : isGoodNak
+          ? `★ 今日能量強，適合推進重要計畫、對外行動、建立關係`
+          : `○ 今日能量平穩，適合穩健執行既定計畫`,
+        `最佳時段：${bestChog.map(c => `${chogTitleCN[c.name]}（${c.start}–${c.end}）`).join('、') || '無特別最佳時段'}`,
+        `必避時段：絕對避開 ${formatTime(rahuS)}–${formatTime(rahuS+slot)}`,
+        `今日避諱方位：${DISHA_SHOOL[weekday]}`,
+      ].join('\n'),
       color:      'blue',
       calColorId: '7',
     },
