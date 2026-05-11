@@ -403,7 +403,7 @@ function computePanchanga(y, m, d, lat, lng, tz) {
 // VERCEL HTTP HANDLER
 // ============================================================
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   // CORS — allow calls from anywhere (iPhone Shortcuts, Claude, etc.)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
