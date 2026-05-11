@@ -1,0 +1,9 @@
+{
+  "name": "omoomi-panchanga-api",
+  "version": "2.0.0",
+  "description": "Free Vedic Panchanga API for omoomi Astro System",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}
